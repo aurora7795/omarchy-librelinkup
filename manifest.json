@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "id": "aurora7795.librelinkup",
+  "name": "LibreLinkUp",
+  "version": "1.0.0",
+  "author": "aurora7795",
+  "description": "Blood glucose from LibreLinkUp: value and trend arrow in the bar, 12-hour graph in a popup",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Glucose",
+    "description": "LibreLinkUp glucose reading with trend arrow and history graph",
+    "category": "Info",
+    "allowMultiple": false,
+    "defaultSection": "right",
+    "defaults": {
+      "intervalSec": 60,
+      "unit": "mgdl"
+    },
+    "schema": [
+      {
+        "key": "intervalSec",
+        "type": "integer",
+        "label": "Refresh interval (seconds)",
+        "min": 60,
+        "max": 600,
+        "step": 30,
+        "defaultValue": 60
+      },
+      {
+        "key": "unit",
+        "type": "string",
+        "label": "Unit (mgdl or mmol)",
+        "defaultValue": "mgdl"
+      }
+    ]
+  },
+  "license": "MIT",
+  "repository": "https://github.com/aurora7795/omarchy-librelinkup",
+  "homepage": "https://github.com/aurora7795/omarchy-librelinkup"
+}
