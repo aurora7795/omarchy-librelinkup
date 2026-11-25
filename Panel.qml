@@ -399,7 +399,15 @@ Panel {
             var pts = r.history
             var now = Date.now() / 1000
             var t0 = now - 12 * 3600
-            var lo = Math.min(40, r.targetLow - 10), hi = Math.max(300, r.targetHigh + 40)
+            var peak = 0, trough = 1000
+            for (var j = 0; j < pts.length; j++) {
+              if (pts[j].t < t0) continue
+              peak = Math.max(peak, pts[j].mgdl)
+              trough = Math.min(trough, pts[j].mgdl)
+            }
+            // Scale to the data so highs and lows are never clipped.
+            var lo = Math.min(40, r.targetLow - 10, trough - 10)
+            var hi = Math.max(300, r.targetHigh + 40, peak + 10)
             var padL = Style.space(34)
             function X(t) { return padL + Math.max(0, Math.min(1, (t - t0) / (now - t0))) * (width - padL) }
             function Y(v) { return height - (Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo) * height }
@@ -407,7 +415,7 @@ Panel {
             ctx.fillStyle = Qt.rgba(fg.r, fg.g, fg.b, 0.10)
             ctx.fillRect(padL, Y(r.targetHigh), width - padL, Y(r.targetLow) - Y(r.targetHigh))
             // Axis ticks in the chosen unit (positions are always mg/dL).
-            var ticks = root.mmol ? [4, 7, 10, 14] : [70, 120, 180, 250]
+            var ticks = root.mmol ? [4, 7, 10, 14, 20, 25] : [70, 120, 180, 250, 350, 450]
             ctx.font = Style.font.caption + "px " + root.bar.fontFamily
             ctx.textBaseline = "middle"
             ctx.lineWidth = 1

@@ -9,6 +9,8 @@ bar, and a 12-hour graph in a popup.
 > Abbott. It uses the unofficial LibreView follower API, which can change or
 > break without notice, and use may be subject to Abbott's terms.
 
+![LibreLinkUp widget: reading and trend arrow in the bar, with the popup open showing a 12-hour graph](preview.png)
+
 ## Features
 
 - Value and trend arrow (`5.8 →`) in the bar; turns the bar's urgent colour
