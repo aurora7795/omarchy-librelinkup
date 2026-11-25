@@ -26,6 +26,11 @@ bar, and a 12-hour graph in a popup.
 - **About…** panel with version, licence and links.
 - Left-click opens the popup, middle-click refreshes, `r` refreshes in the popup.
 
+The notifications panel: a master switch, per-alert toggles, thresholds in your
+chosen unit, and a repeat interval.
+
+![Notifications settings panel](docs/screenshots/notifications.png)
+
 ## Install
 
 ```bash
