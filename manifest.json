@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "aurora7795.librelinkup",
   "name": "LibreLinkUp",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "author": "aurora7795",
   "description": "Blood glucose from LibreLinkUp: value and trend arrow in the bar, 12-hour graph in a popup",
   "kinds": [
