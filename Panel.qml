@@ -74,6 +74,13 @@ Panel {
   readonly property bool showAbout: editingAbout && !showForm && !showAlerts
   readonly property bool showMain: !showForm && !showAlerts && !showAbout
 
+  // Secondary text: the bar's foreground at 75%, readable on the popup
+  // background while still clearly lighter-weight than primary text.
+  readonly property color dimText: {
+    var c = bar ? bar.foreground : Commons.Color.foreground
+    return Qt.rgba(c.r, c.g, c.b, 0.75)
+  }
+
   readonly property string repoUrl: "https://github.com/aurora7795/omarchy-librelinkup"
   readonly property string licenseUrl: "https://opensource.org/license/mit"
   property string version: ""
@@ -274,7 +281,7 @@ Panel {
             width: parent.width
             wrapMode: Text.Wrap
             text: "Use the follower account that the Libre app shares with, not the sensor owner's login."
-            color: Commons.Color.muted
+            color: root.dimText
             font.family: root.bar.fontFamily
             font.pixelSize: Style.font.bodySmall
           }
@@ -301,7 +308,7 @@ Panel {
             text: root.report && root.report.storage === "file"
               ? "No system keyring found: the password is kept in a private file (~/.config/librelinkup/config.json, mode 600)."
               : "The password is stored in your system keyring, not in a file."
-            color: Commons.Color.muted
+            color: root.dimText
             font.family: root.bar.fontFamily
             font.pixelSize: Style.font.bodySmall
           }
@@ -350,7 +357,7 @@ Panel {
             Text {
               textFormat: Text.PlainText
               text: (root.mmol ? "mmol/L" : "mg/dL") + " ⇄"
-              color: unitMouse.containsMouse ? root.bar.foreground : Commons.Color.muted
+              color: unitMouse.containsMouse ? root.bar.foreground : root.dimText
               font.family: root.bar.fontFamily
               font.pixelSize: Style.font.bodySmall
               MouseArea {
@@ -371,7 +378,7 @@ Panel {
           width: parent.width - Style.space(32)
           wrapMode: Text.Wrap
           textFormat: Text.PlainText
-          color: root.error ? Commons.Color.urgent : Commons.Color.muted
+          color: root.error ? Commons.Color.urgent : root.dimText
           font.family: root.bar.fontFamily
           font.pixelSize: Style.font.bodySmall
           text: root.error
@@ -425,7 +432,7 @@ Panel {
               var y = Math.round(Y(mg)) + 0.5
               ctx.strokeStyle = Qt.rgba(fg.r, fg.g, fg.b, 0.18)
               ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(width, y); ctx.stroke()
-              ctx.fillStyle = Qt.rgba(fg.r, fg.g, fg.b, 0.65)
+              ctx.fillStyle = Qt.rgba(fg.r, fg.g, fg.b, 0.8)
               ctx.fillText(String(ticks[k]), 0, y)
             }
             ctx.strokeStyle = fg
@@ -447,7 +454,7 @@ Panel {
           horizontalAlignment: Text.AlignHCenter
           visible: root.showMain && root.report !== null && root.report.history.length > 1
           textFormat: Text.PlainText
-          color: Commons.Color.muted
+          color: root.dimText
           font.family: root.bar.fontFamily
           font.pixelSize: Style.font.bodySmall
           text: {
@@ -501,7 +508,7 @@ Panel {
             width: parent.width
             wrapMode: Text.Wrap
             text: "Shows your LibreLinkUp glucose reading in the bar."
-            color: Commons.Color.muted
+            color: root.dimText
             font.family: root.bar.fontFamily
             font.pixelSize: Style.font.bodySmall
           }
@@ -526,7 +533,7 @@ Panel {
             Text {
               textFormat: Text.PlainText
               text: "Copyright © 2026 Martin Bradford Gago · "
-              color: Commons.Color.muted
+              color: root.dimText
               font.family: root.bar.fontFamily
               font.pixelSize: Style.font.bodySmall
             }
@@ -551,7 +558,7 @@ Panel {
             width: parent.width
             wrapMode: Text.Wrap
             text: "Not a medical device. Do not use for treatment or dosing decisions. Not affiliated with or endorsed by Abbott. Uses the unofficial LibreView API."
-            color: Commons.Color.muted
+            color: root.dimText
             font.family: root.bar.fontFamily
             font.pixelSize: Style.font.bodySmall
           }
@@ -607,7 +614,7 @@ Panel {
                 anchors.verticalCenter: parent.verticalCenter
                 textFormat: Text.PlainText
                 text: "Alert at or below"
-                color: Commons.Color.muted
+                color: root.dimText
                 font.family: root.bar.fontFamily
                 font.pixelSize: Style.font.bodySmall
               }
@@ -626,7 +633,7 @@ Panel {
                 anchors.verticalCenter: parent.verticalCenter
                 textFormat: Text.PlainText
                 text: root.mmol ? "mmol/L" : "mg/dL"
-                color: Commons.Color.muted
+                color: root.dimText
                 font.family: root.bar.fontFamily
                 font.pixelSize: Style.font.bodySmall
               }
@@ -647,7 +654,7 @@ Panel {
                 anchors.verticalCenter: parent.verticalCenter
                 textFormat: Text.PlainText
                 text: "Alert at or above"
-                color: Commons.Color.muted
+                color: root.dimText
                 font.family: root.bar.fontFamily
                 font.pixelSize: Style.font.bodySmall
               }
@@ -666,7 +673,7 @@ Panel {
                 anchors.verticalCenter: parent.verticalCenter
                 textFormat: Text.PlainText
                 text: root.mmol ? "mmol/L" : "mg/dL"
-                color: Commons.Color.muted
+                color: root.dimText
                 font.family: root.bar.fontFamily
                 font.pixelSize: Style.font.bodySmall
               }
@@ -694,7 +701,7 @@ Panel {
                 anchors.verticalCenter: parent.verticalCenter
                 textFormat: Text.PlainText
                 text: "Repeat every"
-                color: Commons.Color.muted
+                color: root.dimText
                 font.family: root.bar.fontFamily
                 font.pixelSize: Style.font.bodySmall
               }
@@ -713,7 +720,7 @@ Panel {
                 anchors.verticalCenter: parent.verticalCenter
                 textFormat: Text.PlainText
                 text: "min (0 = once)"
-                color: Commons.Color.muted
+                color: root.dimText
                 font.family: root.bar.fontFamily
                 font.pixelSize: Style.font.bodySmall
               }
