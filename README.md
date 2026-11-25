@@ -35,6 +35,20 @@ Or clone into `~/.config/omarchy/plugins/aurora7795.librelinkup/` and run
 
 Requires `python3` (standard library only). `secret-tool` (libsecret) is used for password storage when available. Then click the widget and sign in.
 
+## Remove
+
+```bash
+omarchy plugin remove aurora7795.librelinkup
+```
+
+That removes the plugin and its bar entry. Your data is stored separately and
+is left in place; to delete it too:
+
+```bash
+secret-tool clear service omarchy-librelinkup   # the saved password
+rm -rf ~/.config/librelinkup ~/.cache/librelinkup
+```
+
 ## Sign in
 
 Use the **LibreLinkUp follower** account that your Libre app shares with, not
