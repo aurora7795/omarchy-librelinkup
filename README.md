@@ -17,7 +17,11 @@ bar, and a 12-hour graph in a popup.
   and range / average.
 - Click the unit label in the popup to switch between mg/dL and mmol/L; the
   graph axis follows. The choice is remembered.
-- Sign in from the popup itself, no config file editing.
+- Sign in from the popup itself, no config file editing (**Account…**).
+- Notifications for low glucose, high glucose, rising/falling fast, and lost
+  signal, each with its own toggle, thresholds in your chosen unit, a repeat
+  interval, and a master off switch (**Notifications…**).
+- **About…** panel with version, licence and links.
 - Left-click opens the popup, middle-click refreshes, `r` refreshes in the popup.
 
 ## Install
@@ -41,8 +45,11 @@ in the phone app first.
 
 | File | Contents |
 |---|---|
-| `~/.config/librelinkup/config.json` | email, password (**plain text**, permissions 600), unit |
+| `~/.config/librelinkup/config.json` | email, password (**plain text**, permissions 600), unit, notification settings |
 | `~/.cache/librelinkup/session.json` | cached session token (permissions 600) |
+
+Notifications are sent with `omarchy-notification-send`. They depend on this widget,
+the unofficial API and your connection, so do not rely on them as a safety alarm.
 
 The password is passed to the helper through an environment variable, never on
 the command line. Nothing is sent anywhere except LibreView
@@ -66,4 +73,4 @@ In the widget's entry in `~/.config/omarchy/shell.json`:
 
 ## License
 
-MIT
+MIT, Copyright (c) 2026 Martin Bradford Gago

@@ -123,6 +123,7 @@ def fetch(sess, cfg):
     return {
         "ok": True,
         "unit": unit,
+        "alerts": clean_alerts(cfg.get("alerts")),
         "mgdl": cur.get("ValueInMgPerDl"),
         "trend": cur.get("TrendArrow", 3),
         "t": parse_ts(cur.get("FactoryTimestamp", "")),
@@ -175,7 +176,47 @@ def set_unit():
     out({"ok": True, "saved": True})
 
 
+ALERT_DEFAULTS = {"enabled": True, "lowOn": True, "lowAt": 70, "highOn": True, "highAt": 250,
+                  "fastOn": False, "signalOn": False, "repeat": 30}
+
+
+def clean_alerts(raw):
+    """Whitelist keys and clamp values; anything else is dropped."""
+    a = dict(ALERT_DEFAULTS)
+    if not isinstance(raw, dict):
+        return a
+    for k in ("enabled", "lowOn", "highOn", "fastOn", "signalOn"):
+        if isinstance(raw.get(k), bool):
+            a[k] = raw[k]
+    for k, lo, hi in (("lowAt", 40, 120), ("highAt", 140, 400), ("repeat", 0, 240)):
+        v = raw.get(k)
+        if isinstance(v, (int, float)) and not isinstance(v, bool):
+            a[k] = int(max(lo, min(hi, round(v))))
+    return a
+
+
+def set_alerts():
+    try:
+        raw = json.loads(os.environ.get("LLU_ALERTS", ""))
+    except Exception:
+        out({"ok": False, "error": "bad alert settings"})
+    cfg = {}
+    try:
+        with open(CONFIG) as f:
+            cfg = json.load(f)
+    except Exception:
+        pass
+    cfg["alerts"] = clean_alerts(raw)
+    os.makedirs(os.path.dirname(CONFIG), mode=0o700, exist_ok=True)
+    fd = os.open(CONFIG, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w") as f:
+        json.dump(cfg, f, indent=2)
+    out({"ok": True, "saved": True, "alerts": cfg["alerts"]})
+
+
 def main():
+    if "--alerts" in sys.argv:
+        set_alerts()
     if "--unit" in sys.argv:
         set_unit()
     if "--save" in sys.argv:
