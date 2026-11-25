@@ -293,6 +293,18 @@ Panel {
             enabled: !root.saving
             onAccepted: submitButton.clicked()
           }
+          Text {
+            textFormat: Text.PlainText
+            width: parent.width
+            wrapMode: Text.Wrap
+            visible: root.report !== null
+            text: root.report && root.report.storage === "file"
+              ? "No system keyring found: the password is kept in a private file (~/.config/librelinkup/config.json, mode 600)."
+              : "The password is stored in your system keyring, not in a file."
+            color: Commons.Color.muted
+            font.family: root.bar.fontFamily
+            font.pixelSize: Style.font.bodySmall
+          }
           Row {
             spacing: Style.space(8)
             Button {

@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """LibreLinkUp fetcher for the Omarchy bar widget.
 
-Reads credentials from ~/.config/librelinkup/config.json, caches the session
-token in ~/.cache/librelinkup/session.json, and prints one JSON object to
+Reads the email and settings from ~/.config/librelinkup/config.json and the
+password from the system keyring (Secret Service, via `secret-tool`), falling
+back to a mode-600 password field in config.json when no keyring is available.
+Caches the session token in ~/.cache/librelinkup/session.json, and prints one JSON object to
 stdout. Uses the unofficial LibreView follower API (can change without notice).
 """
-import calendar, hashlib, json, os, sys, time, urllib.request, urllib.error
+import calendar, hashlib, json, os, subprocess, sys, time, urllib.request, urllib.error
 
 CONFIG = os.path.expanduser("~/.config/librelinkup/config.json")
 CACHE = os.path.expanduser("~/.cache/librelinkup/session.json")
@@ -26,6 +28,52 @@ class Err(Exception):
 def out(obj):
     print(json.dumps(obj))
     sys.exit(0)
+
+
+def read_config():
+    try:
+        with open(CONFIG) as f:
+            c = json.load(f)
+        return c if isinstance(c, dict) else {}
+    except Exception:
+        return {}
+
+
+def write_config(cfg):
+    os.makedirs(os.path.dirname(CONFIG), mode=0o700, exist_ok=True)
+    fd = os.open(CONFIG, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w") as f:
+        json.dump(cfg, f, indent=2)
+
+
+# --- password storage: system keyring first, mode-600 file as the fallback ---
+KR_ATTRS = ["service", "omarchy-librelinkup"]
+
+
+def kr_store(password):
+    try:
+        r = subprocess.run(["secret-tool", "store", "--label=LibreLinkUp (Omarchy widget)"] + KR_ATTRS,
+                           input=password.encode(), capture_output=True, timeout=30)
+        return r.returncode == 0
+    except Exception:
+        return False
+
+
+def kr_lookup():
+    try:
+        r = subprocess.run(["secret-tool", "lookup"] + KR_ATTRS, capture_output=True, timeout=30)
+        return r.stdout.decode() if r.returncode == 0 else ""
+    except Exception:
+        return ""
+
+
+def migrate_password(cfg):
+    """Move a plaintext password from config.json into the keyring, but only
+    after reading it back successfully, so a failed store never loses it."""
+    pw = cfg.get("password")
+    if pw and kr_store(pw) and kr_lookup() == pw:
+        del cfg["password"]
+        write_config(cfg)
 
 
 def request(host, path, body=None, token=None, account=None):
@@ -69,7 +117,10 @@ def save_cache(c):
 
 def login(cfg):
     host = cfg.get("host") or "api.libreview.io"
-    body = {"email": cfg["email"], "password": cfg["password"]}
+    password = cfg.get("password") or kr_lookup()
+    if not password:
+        raise Err("login failed: no saved password (keyring locked or empty), sign in again")
+    body = {"email": cfg["email"], "password": password}
     for _ in range(3):
         r = request(host, "/llu/auth/login", body)
         data = r.get("data") or {}
@@ -79,7 +130,7 @@ def login(cfg):
         if r.get("status") == 2 or "authTicket" not in data:
             if (data.get("step") or {}).get("type"):
                 raise Err("accept the new terms in the LibreLinkUp phone app")
-            raise Err("login failed: check email/password in config.json")
+            raise Err("login failed: check your email and password")
         tok = data["authTicket"]["token"]
         uid = data["user"]["id"]
         c = {
@@ -123,6 +174,7 @@ def fetch(sess, cfg):
     return {
         "ok": True,
         "unit": unit,
+        "storage": "file" if cfg.get("password") else "keyring",
         "alerts": clean_alerts(cfg.get("alerts")),
         "mgdl": cur.get("ValueInMgPerDl"),
         "trend": cur.get("TrendArrow", 3),
@@ -141,17 +193,13 @@ def save_config():
     password = os.environ.get("LLU_PASSWORD", "")
     if not email or not password:
         out({"ok": False, "setup": True, "error": "enter both email and password"})
-    os.makedirs(os.path.dirname(CONFIG), mode=0o700, exist_ok=True)
-    cfg = {}
-    try:
-        with open(CONFIG) as f:
-            cfg = json.load(f)
-    except Exception:
-        pass
-    cfg["email"], cfg["password"] = email, password
-    fd = os.open(CONFIG, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    with os.fdopen(fd, "w") as f:
-        json.dump(cfg, f, indent=2)
+    cfg = read_config()
+    cfg["email"] = email
+    if kr_store(password):
+        cfg.pop("password", None)
+    else:
+        cfg["password"] = password  # no keyring available: mode-600 file fallback
+    write_config(cfg)
     try:
         os.remove(CACHE)
     except FileNotFoundError:
@@ -162,17 +210,9 @@ def set_unit():
     unit = sys.argv[sys.argv.index("--unit") + 1] if len(sys.argv) > sys.argv.index("--unit") + 1 else ""
     if unit not in ("mgdl", "mmol"):
         out({"ok": False, "error": "unit must be mgdl or mmol"})
-    cfg = {}
-    try:
-        with open(CONFIG) as f:
-            cfg = json.load(f)
-    except Exception:
-        pass
+    cfg = read_config()
     cfg["unit"] = unit
-    os.makedirs(os.path.dirname(CONFIG), mode=0o700, exist_ok=True)
-    fd = os.open(CONFIG, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    with os.fdopen(fd, "w") as f:
-        json.dump(cfg, f, indent=2)
+    write_config(cfg)
     out({"ok": True, "saved": True})
 
 
@@ -200,17 +240,9 @@ def set_alerts():
         raw = json.loads(os.environ.get("LLU_ALERTS", ""))
     except Exception:
         out({"ok": False, "error": "bad alert settings"})
-    cfg = {}
-    try:
-        with open(CONFIG) as f:
-            cfg = json.load(f)
-    except Exception:
-        pass
+    cfg = read_config()
     cfg["alerts"] = clean_alerts(raw)
-    os.makedirs(os.path.dirname(CONFIG), mode=0o700, exist_ok=True)
-    fd = os.open(CONFIG, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    with os.fdopen(fd, "w") as f:
-        json.dump(cfg, f, indent=2)
+    write_config(cfg)
     out({"ok": True, "saved": True, "alerts": cfg["alerts"]})
 
 
@@ -221,15 +253,10 @@ def main():
         set_unit()
     if "--save" in sys.argv:
         save_config()
-    try:
-        with open(CONFIG) as f:
-            cfg = json.load(f)
-        if not cfg.get("email") or not cfg.get("password"):
-            raise KeyError
-    except FileNotFoundError:
+    cfg = read_config()
+    if not cfg.get("email"):
         out({"ok": False, "setup": True, "error": "Sign in with your LibreLinkUp follower account"})
-    except Exception:
-        out({"ok": False, "setup": True, "error": "Sign in with your LibreLinkUp follower account"})
+    migrate_password(cfg)
     try:
         sess = load_cache() or login(cfg)
         try:

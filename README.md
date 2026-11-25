@@ -33,7 +33,7 @@ omarchy plugin add https://github.com/aurora7795/omarchy-librelinkup --enable
 Or clone into `~/.config/omarchy/plugins/aurora7795.librelinkup/` and run
 `omarchy plugin enable aurora7795.librelinkup --section right`.
 
-Requires `python3` (standard library only). Then click the widget and sign in.
+Requires `python3` (standard library only). `secret-tool` (libsecret) is used for password storage when available. Then click the widget and sign in.
 
 ## Sign in
 
@@ -45,11 +45,18 @@ in the phone app first.
 
 | File | Contents |
 |---|---|
-| `~/.config/librelinkup/config.json` | email, password (**plain text**, permissions 600), unit, notification settings |
+| System keyring (Secret Service, via `secret-tool`) | your password, under the attribute `service=omarchy-librelinkup` |
+| `~/.config/librelinkup/config.json` | email, unit, notification settings (permissions 600) |
 | `~/.cache/librelinkup/session.json` | cached session token (permissions 600) |
 
 Notifications are sent with `omarchy-notification-send`. They depend on this widget,
 the unofficial API and your connection, so do not rely on them as a safety alarm.
+
+If no keyring is available (no Secret Service, or `secret-tool` missing), the
+widget falls back to storing the password **in plain text** in `config.json`
+(permissions 600) and says so in the Account panel. An existing plain-text
+password is moved into the keyring automatically the first time the widget
+runs, and only removed from the file after it has been read back successfully.
 
 The password is passed to the helper through an environment variable, never on
 the command line. Nothing is sent anywhere except LibreView
