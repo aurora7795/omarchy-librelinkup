@@ -31,6 +31,10 @@ chosen unit, and a repeat interval.
 
 ![Notifications settings panel](docs/screenshots/notifications.png)
 
+Each alert has its own icon: low, high, falling fast, rising fast and no data.
+
+![Alert notifications: low, high, falling fast, rising fast, no data](docs/screenshots/alerts.png)
+
 ## Install
 
 ```bash
