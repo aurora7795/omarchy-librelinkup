@@ -20,7 +20,7 @@ bar, and a 12-hour graph in a popup.
 - Click the unit label in the popup to switch between mg/dL and mmol/L; the
   graph axis follows. The choice is remembered.
 - Sign in from the popup itself, no config file editing (**Account…**).
-- Notifications for low glucose, high glucose, rising/falling fast, and lost
+- Notifications (with an icon per alert) for low glucose, high glucose, rising/falling fast, and lost
   signal, each with its own toggle, thresholds in your chosen unit, a repeat
   interval, and a master off switch (**Notifications…**).
 - **About…** panel with version, licence and links.

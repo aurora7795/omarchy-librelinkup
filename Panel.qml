@@ -68,6 +68,12 @@ Panel {
   property bool editingAlerts: false
   property var alertState: ({})      // kind -> time of last notification
   readonly property int signalLostMinutes: 30
+  // Nerd Font (Material Design) glyphs, written as surrogate pairs.
+  readonly property string glyphLow: "\uDB81\uDD8C"     // water drop
+  readonly property string glyphHigh: "\uDB80\uDC26"    // alert
+  readonly property string glyphDown: "\uDB81\uDF2E"    // arrow down
+  readonly property string glyphUp: "\uDB81\uDF37"      // arrow up
+  readonly property string glyphSignal: "\uDB81\uDDAA"  // wifi off
 
   readonly property bool showAlerts: editingAlerts && !showForm
   property bool editingAbout: false
@@ -130,7 +136,7 @@ Panel {
 
   // Fire `kind` when `active` turns on, and again every `repeat` minutes while
   // it stays on (0 = once per episode). Turning off resets it.
-  function evaluate(kind, active, headline, body, urgency) {
+  function evaluate(kind, active, headline, body, urgency, glyph) {
     var st = Object.assign({}, alertState)
     if (!active) {
       if (kind in st) { delete st[kind]; alertState = st }
@@ -142,14 +148,16 @@ Panel {
     if (last !== undefined && (every <= 0 || now - last < every)) return
     st[kind] = now
     alertState = st
-    sendAlert(headline, body, urgency)
+    sendAlert(headline, body, urgency, glyph)
   }
 
-  function sendAlert(headline, body, urgency) {
+  function sendAlert(headline, body, urgency, glyph) {
     var proc = alertProcs.objectAt(nextAlertSlot)
     nextAlertSlot = (nextAlertSlot + 1) % 4
     if (!proc) return
-    proc.command = ["omarchy-notification-send", "--app-name", "LibreLinkUp", "-u", urgency, headline, body]
+    var cmd = ["omarchy-notification-send", "--app-name", "LibreLinkUp", "-u", urgency]
+    if (glyph) cmd.push("-g", glyph)
+    proc.command = cmd.concat([headline, body])
     proc.running = false
     proc.running = true
   }
@@ -167,7 +175,7 @@ Panel {
     var age = ageMinutes()
     // No fresh data: only the signal-lost alert can apply.
     evaluate("signal", alerts.signalOn && age >= signalLostMinutes,
-      "No glucose data", "Last reading " + age + " min ago", "normal")
+      "No glucose data", "Last reading " + age + " min ago", "normal", glyphSignal)
     if (stale) {
       evaluate("low", false); evaluate("high", false); evaluate("fastDown", false); evaluate("fastUp", false)
       return
@@ -175,10 +183,10 @@ Panel {
     var v = report.mgdl
     var unit = (mmol ? "mmol/L" : "mg/dL")
     var body = fmt(v) + " " + unit + " " + arrow(report.trend)
-    evaluate("low", alerts.lowOn && v <= alerts.lowAt, "Low glucose", body, "critical")
-    evaluate("high", alerts.highOn && v >= alerts.highAt, "High glucose", body, "normal")
-    evaluate("fastDown", alerts.fastOn && report.trend === 1, "Falling fast", body, "normal")
-    evaluate("fastUp", alerts.fastOn && report.trend === 5, "Rising fast", body, "normal")
+    evaluate("low", alerts.lowOn && v <= alerts.lowAt, "Low glucose", body, "critical", glyphLow)
+    evaluate("high", alerts.highOn && v >= alerts.highAt, "High glucose", body, "normal", glyphHigh)
+    evaluate("fastDown", alerts.fastOn && report.trend === 1, "Falling fast", body, "normal", glyphDown)
+    evaluate("fastUp", alerts.fastOn && report.trend === 5, "Rising fast", body, "normal", glyphUp)
   }
 
   function refresh() {
